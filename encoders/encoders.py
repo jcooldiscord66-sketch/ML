@@ -1,7 +1,7 @@
 import string
 class encoding_error(Exception):
     pass
-class label_encoder:
+class LabelEncoder:
     def fit(self,data:list,dtype=bool):
         unique = list(dict.fromkeys(data))
         encoded= []
@@ -16,7 +16,7 @@ class label_encoder:
         self.encoded = encoded
     def get_encode(self):
         return (self.encoded)
-class one_hot_encoder:
+class OneHotEncoder():
     def fit(self,data:list,dtype=bool):
         unique = list(dict.fromkeys(data))
         encoded = {}
@@ -26,20 +26,28 @@ class one_hot_encoder:
             for j in encoded:
                 encoded[j].append(dtype(i==j))
         self.encoded = encoded
-    def get_encoded(self):
-        return self.encoded
-class binary_encoder:
-    def alphabets_to_bin(self,n:str):
+    def get_encoded(self,string_no=False):
+        if string_no:
+            ecnoded =[]
+            for i in self.encoded:
+                ecnoded.append(self.encoded.get(i))
+            return ecnoded
+        else:
+            return self.encoded
+class BinaryEncoder():
+    def alphabets_to_bin(self,n):
         con = list(string.ascii_letters)
         converter = {}
         mid = []
-        for i,j in zip(con,range(1,53)):
-            converter.update({i:str(bin(j).replace("0b",""))})
         for i in range(0,10):
-            converter.update({str(i):str(bin(i+53)).replace("0b","")})
-        for z in n:
-            mid.append(str(converter.get(z)))
+            converter.update({str(i):str(bin(i)).replace("0b","")})
+        for i,j in zip(con,range(11,63)):
+            converter.update({i:str(bin(j).replace("0b",""))})  
         converter[' '] = str(bin(63)).replace("0b","")
+        for y,z in zip(string.punctuation,range(64,64+len(string.punctuation)+1)):
+            converter.update({y:str(bin(z)).replace("0b","")})       
+        for z in str(n):
+            mid.append(str(converter.get(z)))
         result = "".join(mid)
         return result
     def fit(self,data:list,dtype=bool):
@@ -53,6 +61,22 @@ class binary_encoder:
             for j in encoded:
                 real_encode = compare.get(i)
                 encoded[j].append(dtype(real_encode==j))
+        self.encoded = encoded
+    def get_encoded(self,string_no=False):
+        if string_no:
+            ecnoded =[]
+            for i in self.encoded:
+                ecnoded.append(self.encoded.get(i))
+            return ecnoded
+        else:
+            return self.encoded
+class OrdinalEnocder:
+    def fit(self,data:list,order=None):
+        if order==None:
+            raise TypeError('there must be an ordert to use the ordinal encoder is your data has no order please use our one hot encoder or you must give an order in the form od dict (eg,{"low":1,"medium":2}and etc)')
+        encoded = []
+        for i in data:
+            encoded.append(order.get(i))
         self.encoded = encoded
     def get_encoded(self):
         return self.encoded
