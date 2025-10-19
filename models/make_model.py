@@ -40,7 +40,6 @@ class MultipleOutputLinearRegression:
         for i in self.models:
             predictions.append(self.models[i].predict(value))
         return predictions
-        
 def mean(v):
     return sum(v)/len(v)
 def std(p):
@@ -198,6 +197,8 @@ class DecisionTreeClassifier:
                             p.append(ij)
                         else:
                             q.append(ij)
+                if len(p) == 0 or len(q) == 0:
+                    continue
                 X_psplit = [X[ml]for ml in p]
                 y_psplit = [y[nl]for nl in p]
                 X_qsplit = [X[bn]for bn in q]
@@ -306,6 +307,8 @@ class DecisionTreeRegression:
                             p.append(ij)
                         else:
                             q.append(ij)
+                if len(p) == 0 or len(q) == 0:
+                    continue
                 X_psplit = [X[ml]for ml in p]
                 y_psplit = [y[nl]for nl in p]
                 X_qsplit = [X[bn]for bn in q]
@@ -319,10 +322,10 @@ class DecisionTreeRegression:
                     average_q = mean(y_qsplit)
                     list_for_p = []
                     list_for_q = []
-                    for each_number in p:
+                    for each_number in y_psplit:
                         list_for_p.append((each_number-average_p)**2)
                     p_gain = sum(list_for_p)/len(list_for_p)
-                    for each_number in q:
+                    for each_number in y_qsplit:
                         list_for_q.append((each_number-average_q)**2)
                     q_gain = sum(list_for_q)/len(list_for_q)
                 g_weight = (len(p)/tota)*p_gain + (len(q)/tota)*q_gain
@@ -337,7 +340,7 @@ class DecisionTreeRegression:
                     best_split_value = n      
         nodes = {}   
         if best_gain<=0:
-            return mean(y)
+            return {"leaf":mean(y)}
         else:
             left = self.__build_tree__(best_X_psplit,best_y_psplit,method)
             right = self.__build_tree__(best_X_qsplit,best_y_qsplit,method)
