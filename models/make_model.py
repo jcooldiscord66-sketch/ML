@@ -1,3 +1,4 @@
+import random 
 from collections import Counter
 import numpy as np
 import math
@@ -264,13 +265,10 @@ class DecisionTreeClassifier:
                 else:
                     return self._predict_sample_(X,node["right"])
     def predict(self,X):
-        answers = []
-        for i in X:
-            ans = self._predict_sample_(i,self.tree)
-            answers.append(ans)
-        return answers
+        ans = self._predict_sample_(X,self.tree)
+        return ans
 class DecisionTreeRegression:
-    def __build_tree__(self,X,y,method="Equality",criterion="variance"):
+    def __build_tree__(self,X,y,method="Thershold",criterion="variance"):
         if criterion=="variance":
             G_main = std(y)**2
         else:
@@ -375,3 +373,166 @@ class DecisionTreeRegression:
             ans = self._predict_sample_(i,self.tree)
             answers.append(ans)
         return answers
+class RandomForestClassifier:
+    def fit(self,X,y,n_trees=5,min_samples=None,max_samples=None,min_features=None,max_features=None,method_for_trees="Equality",criterion_for_trees="impurity"):
+        if len(X)!=len(y):
+            raise TypeError("data must be of same length")
+        for  i in X:
+            for j in i:
+                if type(j)!=int and type(j)!= float:
+                    raise ValueError("the data must be be in numbers")
+        for i  in y:
+            if type(i)!= int and type(i)!=float:
+                raise ValueError("the label must in numberds")
+        if min_samples==None or max_samples==None:
+            min_samples = round((30/100)*len(X))if round((30/100)*len(X))!=0 else 1
+            max_samples = round((60/100)*len(X))if round((60/100)*len(X))!=0 or round((60/100)*len(X))>=min_samples else 1
+        else:
+            min_samples = min_samples
+            max_samples = max_samples
+            if min_samples==0 or max_samples==0:
+                raise TypeError("min andd max samples should not be 0 first go and learn how to use random forests")
+        number_of_samples_for_each_tree = []
+        random.seed(None)
+        for i in range(n_trees):
+            number_of_samples_for_each_tree.append(random.randint(min_samples,max_samples))
+        indexes_for_samples = []
+        for i in range(n_trees):
+            n = number_of_samples_for_each_tree[i]
+            indexes_for_samples.append(random.choices(range(len(X)),k=n))
+        sampled_data = []
+        trainng_y = []
+        for i in range(n_trees):
+            n = indexes_for_samples[i]
+            tree_x = []
+            tree_y = []
+            for j in n:
+                tree_x.append(X[j])
+                tree_y.append(y[j])
+            sampled_data.append(tree_x)
+            trainng_y.append(tree_y)
+        total_features = len(X[0])
+        if min_features==None or max_features==None:
+            min_features = round(math.log2(total_features))if round(math.log2(total_features))!=0 else 1
+            max_features = round((70/100)*total_features)if round((70/100)*total_features)!=0 or round((70/100)*total_features)>min_features else 1
+        else:
+            min_features = min_features
+            max_features = max_features
+            if min_features==0 or max_features==0:
+                raise TypeError("the min and max features must be greater than 0")
+            if min_features>max_features:
+                raise TypeError("the max  features should be larger than min features")
+            if max_features>total_features:
+                raise ValueError("the max features hsould not be greater than total number of features")
+        number_of_features_for_each = []
+        for i in range(n_trees):
+            number_of_features_for_each.append(random.randint(min_features,max_features))
+        feature_indexes = []
+        for i in range(n_trees):
+            s = number_of_features_for_each[i]
+            feature_indexes.append(random.sample(range(total_features),k=s))
+        sliced = []
+        for i in range(n_trees):
+            tree_x = []
+            slicing_data = sampled_data[i]
+            f = feature_indexes[i]
+            for j in slicing_data:
+                tree_x.append([j[p] for p in f])
+            sliced.append(tree_x)
+        model = {}
+        for i in range(n_trees):
+            model.update({i:DecisionTreeClassifier()})
+        for i in range(n_trees):
+            model[i].fit(sliced[i], trainng_y[i], method=method_for_trees,criterion=criterion_for_trees)
+        self.models = model
+        self.features = feature_indexes
+    def predict(self,X):
+        predictions = []
+        for i in range(len(self.models)):
+            f = self.features[i]
+            t = [X[p] for p in f]
+            label = self.models[i].predict(t)
+            predictions.append(label)
+        count = Counter(predictions)
+        return count.most_common(1)[0][0]
+class RandomForestRegression:
+    def fit(self,X,y,n_trees=5,min_samples=None,max_samples=None,min_features=None,max_features=None,method_for_trees="Thershold",criterion_for_trees="variance"):
+        if len(X)!=len(y):
+            raise TypeError("data must be of same length")
+        for  i in X:
+            for j in i:
+                if type(j)!=int and type(j)!= float:
+                    raise ValueError("the data must be be in numbers")
+        for i  in y:
+            if type(i)!= int and type(i)!=float:
+                raise ValueError("the label must in numberds")
+        if min_samples==None or max_samples==None:
+            min_samples = round((30/100)*len(X))if round((30/100)*len(X))!=0 else 1
+            max_samples = round((60/100)*len(X))if round((60/100)*len(X))!=0 or round((60/100)*len(X))>=min_samples else 1
+        else:
+            min_samples = min_samples
+            max_samples = max_samples
+            if min_samples==0 or max_samples==0:
+                raise TypeError("min andd max samples should not be 0 first go and learn how to use random forests")
+        number_of_samples_for_each_tree = []
+        random.seed(None)
+        for i in range(n_trees):
+            number_of_samples_for_each_tree.append(random.randint(min_samples,max_samples))
+        indexes_for_samples = []
+        for i in range(n_trees):
+            n = number_of_samples_for_each_tree[i]
+            indexes_for_samples.append(random.choices(range(len(X)),k=n))
+        sampled_data = []
+        trainng_y = []
+        for i in range(n_trees):
+            n = indexes_for_samples[i]
+            tree_x = []
+            tree_y = []
+            for j in n:
+                tree_x.append(X[j])
+                tree_y.append(y[j])
+            sampled_data.append(tree_x)
+            trainng_y.append(tree_y)
+        total_features = len(X[0])
+        if min_features==None or max_features==None:
+            min_features = round(math.log2(total_features))if round(math.log2(total_features))!=0 else 1
+            max_features = round((70/100)*total_features)if round((70/100)*total_features)!=0 or round((70/100)*total_features)>min_features else 1
+        else:
+            min_features = min_features
+            max_features = max_features
+            if min_features==0 or max_features==0:
+                raise TypeError("the min and max features must be greater than 0")
+            if min_features>max_features:
+                raise TypeError("the max  features should be larger than min features")
+            if max_features>total_features:
+                raise ValueError("the max features hsould not be greater than total number of features")
+        number_of_features_for_each = []
+        for i in range(n_trees):
+            number_of_features_for_each.append(random.randint(min_features,max_features))
+        feature_indexes = []
+        for i in range(n_trees):
+            s = number_of_features_for_each[i]
+            feature_indexes.append(random.sample(range(total_features),k=s))
+        sliced = []
+        for i in range(n_trees):
+            tree_x = []
+            slicing_data = sampled_data[i]
+            f = feature_indexes[i]
+            for j in slicing_data:
+                tree_x.append([j[p] for p in f])
+            sliced.append(tree_x)
+        model = {}
+        for i in range(n_trees):
+            model.update({i:DecisionTreeRegression()})
+        for i in range(n_trees):
+            model[i].fit(sliced[i], trainng_y[i], method=method_for_trees,criterion=criterion_for_trees)
+        self.models = model
+        self.features = feature_indexes
+    def predict(self,X):
+        predictions = []
+        for i in range(len(self.models)):
+            f = self.features[i]
+            t = [X[p] for p in f]
+            label = self.models[i].predict(t)
+            predictions.append(label)
+        return mean(predictions)
